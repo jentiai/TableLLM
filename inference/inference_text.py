@@ -1,7 +1,12 @@
 import json
 import argparse
 from vllm import LLM, SamplingParams
+import torch
+from transformers import AutoModelForCausalLM
 
+# Helper function to measure GPU memory usage
+def measure_gpu_memory():
+    return torch.cuda.memory_allocated(), torch.cuda.memory_reserved()
 
 def inference(args):
     # load test data
@@ -9,16 +14,24 @@ def inference(args):
         datasets = [json.loads(line) for line in fp.readlines()]
     prompts = [f"[INST]{data['prompt']}[/INST]" for data in datasets]
 
+    model = AutoModelForCausalLM.from_pretrained("RUCKBReasoning/TableLLM-13b")
     # load model
     llm = LLM(model=args.model_path, tensor_parallel_size=args.tensor_parallel_size, max_model_len=2048)
+    
+    end_mem = measure_gpu_memory()
+    print(f"GPU memory usage for model load: {end_mem[0]} bytes (allocated), {end_mem[1]} bytes (reserved)")
+
 
     # get LLM response
     sampling_params = SamplingParams(temperature=args.temperature, top_p=args.top_p, max_tokens=512)
     responses = llm.generate(prompts, sampling_params=sampling_params)
+    
+    end_mem = measure_gpu_memory()
+    print(f"GPU memory usage for model load: {end_mem[0]} bytes (allocated), {end_mem[1]} bytes (reserved)")
 
     # save to file
     output = []
-    for i in range(len(datasets)):
+    for i in range(5):
         output.append(json.dumps({
             'question' : datasets[i]['question'],
             'prompt': datasets[i]['prompt'],

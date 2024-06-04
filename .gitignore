@@ -8,3 +8,7 @@ evaluation/spider-eval/tmp/*
 
 evaluation/self-created-eval/infiagent
 evaluation/self-created-eval/tmp/*
+
+dataset_korean
+
+TableLLM-13b
